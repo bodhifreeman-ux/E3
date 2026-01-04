@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .stat-card h3 { color: #667eea; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2rem; font-weight: bold; }
+        .query-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .query-input {
+            width: 100%;
+            padding: 1rem;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+        .query-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        .query-button:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 E3 DevMind AI</h1>
+        <p>CSDL-Native Intelligence for E3 Consortium</p>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Agents</h3>
+                <div class="value">32</div>
+                <p>All Active</p>
+            </div>
+            <div class="stat-card">
+                <h3>Documents</h3>
+                <div class="value">10,542</div>
+                <p>In Knowledge Base</p>
+            </div>
+            <div class="stat-card">
+                <h3>Queries</h3>
+                <div class="value">15,234</div>
+                <p>Processed Today</p>
+            </div>
+            <div class="stat-card">
+                <h3>Uptime</h3>
+                <div class="value">99.9%</div>
+                <p>Last 30 Days</p>
+            </div>
+        </div>
+
+        <div class="query-box">
+            <h2>Ask E3 DevMind AI</h2>
+            <input type="text" class="query-input" placeholder="What are the risks in our current sprint?" id="queryInput">
+            <button class="query-button" onclick="submitQuery()">Submit Query</button>
+            <div id="response" style="margin-top: 2rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function submitQuery() {
+            const query = document.getElementById('queryInput').value;
+            const responseDiv = document.getElementById('response');
+
+            responseDiv.innerHTML = '<p>🤔 Processing...</p>';
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query, use_compression: true})
+                });
+
+                const data = await response.json();
+                responseDiv.innerHTML = `
+                    <h3>Response:</h3>
+                    <p>${data.response}</p>
+                    <p style="color: #667eea; margin-top: 1rem;">
+                        Agents: ${data.agents_involved.join(', ')} |
+                        Time: ${data.processing_time_ms.toFixed(1)}ms
+                    </p>
+                `;
+            } catch (error) {
+                responseDiv.innerHTML = `<p style="color: #ff4444;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

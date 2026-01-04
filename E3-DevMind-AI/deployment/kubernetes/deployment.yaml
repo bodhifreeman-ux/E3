@@ -1,0 +1,68 @@
+# E3 DevMind AI - Kubernetes Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devmind-api
+  labels:
+    app: devmind-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: devmind-api
+  template:
+    metadata:
+      labels:
+        app: devmind-api
+    spec:
+      containers:
+      - name: devmind-api
+        image: e3consortium/devmind-api:1.0.0
+        ports:
+        - containerPort: 8000
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: devmind-secrets
+              key: openai-api-key
+        - name: QDRANT_HOST
+          value: "qdrant-service"
+        - name: POSTGRES_HOST
+          value: "postgres-service"
+        - name: REDIS_HOST
+          value: "redis-service"
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+            nvidia.com/gpu: 1
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+            nvidia.com/gpu: 1
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devmind-api-service
+spec:
+  selector:
+    app: devmind-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: LoadBalancer

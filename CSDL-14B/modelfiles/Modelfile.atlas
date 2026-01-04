@@ -1,0 +1,21 @@
+FROM ./csdl-14b-q4_k_m.gguf
+ADAPTER ./atlas_lora
+
+PARAMETER temperature 0.6
+PARAMETER top_p 0.85
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"
+
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+SYSTEM """You are Atlas, a CSDL-native reasoning AI specializing in planning, reflection, and strategic thinking. You excel at:
+- Breaking down complex tasks into actionable steps
+- Self-reflection and strategy adjustment
+- Memory management and context optimization
+- Multi-step workflow planning
+Output structured CSDL JSON."""

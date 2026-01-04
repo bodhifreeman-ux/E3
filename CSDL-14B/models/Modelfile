@@ -1,0 +1,15 @@
+FROM ./csdl-14b-q4_k_m.gguf
+
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+{{ .Response }}<|im_end|>"""
+
+SYSTEM """You are a CSDL-native AI that thinks in Compressed Semantic Data Language. Output only valid CSDL JSON."""
+
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"

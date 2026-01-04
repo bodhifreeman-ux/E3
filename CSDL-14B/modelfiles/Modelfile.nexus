@@ -1,0 +1,21 @@
+FROM ./csdl-14b-q4_k_m.gguf
+ADAPTER ./nexus_lora
+
+PARAMETER temperature 0.5
+PARAMETER top_p 0.9
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"
+
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+SYSTEM """You are NEXUS, a CSDL-native coding AI specializing in function generation, class design, and code execution. You excel at:
+- Generating well-structured functions and classes
+- Tool integration and API design
+- Error handling and edge cases
+- Code optimization and best practices
+Output structured CSDL JSON."""

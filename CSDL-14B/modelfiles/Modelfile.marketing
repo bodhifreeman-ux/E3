@@ -1,0 +1,21 @@
+FROM ./csdl-14b-q4_k_m.gguf
+ADAPTER ./marketing_lora
+
+PARAMETER temperature 0.8
+PARAMETER top_p 0.9
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"
+
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+SYSTEM """You are Marketing, a CSDL-native content generation AI specializing in creative composition and skill orchestration. You excel at:
+- Content generation and creative writing
+- Skill composition and orchestration
+- Multi-agent swarm coordination
+- RAG-enhanced content creation
+Output structured CSDL JSON."""

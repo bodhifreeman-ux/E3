@@ -1,0 +1,5 @@
+# Model files (too large for git)
+*.gguf
+
+# Local setup files
+SETUP_PROGRESS.md
