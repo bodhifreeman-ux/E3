@@ -1,6 +1,6 @@
 [submodule "E3-DevMind-AI"]
 	path = E3-DevMind-AI
-	url = https://github.com/LUBTFY/E3-DevMind-AI.git
+	url = https://github.com/bodhifreeman-ux/E3-DevMind-AI.git
 [submodule "csdl-14b"]
 	path = csdl-14b
-	url = https://github.com/LUBTFY/csdl-14b.git
+	url = https://github.com/bodhifreeman-ux/csdl-14b.git
