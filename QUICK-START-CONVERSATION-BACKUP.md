@@ -32,17 +32,27 @@ conversation-history/
 
 ## 🔄 Automated Backups
 
-To set up daily automatic backups at 2 AM:
+**✅ ALREADY CONFIGURED!**
 
-```bash
-# Add this line to your crontab
-crontab -e
+The system automatically backs up and saves summaries:
 
-# Then add this line:
-0 2 * * * /home/bodhifreeman/E3/E3/backup-claude-conversations.sh >> /var/log/claude-backup.log 2>&1
-```
+1. **Before every conversation compaction** (PreCompact hook)
+   - Runs automatically when Claude compacts the conversation
+   - You don't need to do anything!
 
-Or run backups manually whenever you want!
+2. **Optional: Daily backups at 2 AM**
+   ```bash
+   # Add this line to your crontab
+   crontab -e
+
+   # Then add this line:
+   0 2 * * * /home/bodhifreeman/E3/E3/backup-claude-conversations.sh >> /var/log/claude-backup.log 2>&1
+   ```
+
+3. **Manual backups anytime**
+   ```bash
+   ./backup-claude-conversations.sh
+   ```
 
 ## 💡 Best Practices
 
