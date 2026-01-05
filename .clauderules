@@ -1,0 +1,162 @@
+# E3 Project - CSDL-14B on DGX Spark
+
+## Hardware Environment
+
+You are working on an **NVIDIA DGX Spark** with:
+- **GPU**: Grace Blackwell GB10
+- **Memory**: 128GB unified memory
+- **CPU**: 20 ARM cores
+- **CUDA**: Version 13.0
+- **Architecture**: 121a (Grace Blackwell)
+
+## Project Context
+
+This is the **E3 platform** featuring:
+1. **CSDL-14B** - Fine-tuned 14B parameter LLM for Compressed Semantic Data Language
+   - Base: Qwen2.5-14B-Instruct (14.7B parameters)
+   - Training: 32,000+ CSDL compression examples
+   - Format: SafeTensors F16 → GGUF
+   - Compression: 90-98% token reduction
+
+2. **E3-DevMind-AI** - 32-agent CSDL-native cognitive swarm
+   - 32 specialized agents in 7-tier hierarchy
+   - Multimodal: Voice, Vision, Video
+   - Pure CSDL protocol communication
+
+## Quantization Strategy for DGX Spark
+
+With 128GB unified memory, prefer **high-quality quantizations**:
+
+**Recommended**: Q8_0 (14GB) or F16 (28GB)
+- Q8_0: Near-lossless quality, 2x faster than F16
+- F16: Maximum quality, slower inference
+
+**NOT recommended**: Q4_K_M (that's for 32GB systems like Geekom)
+
+## Model Paths
+
+- **Source models**: `/home/bodhifreeman/E3/csdl-14b/model/merged_16bit/`
+- **Converted GGUF**: `/home/bodhifreeman/E3/E3/csdl-14b-f16.gguf`
+- **llama.cpp**: `/home/bodhifreeman/E3/E3/llama.cpp/`
+- **llama-server**: `/home/bodhifreeman/E3/E3/llama.cpp/build/bin/llama-server`
+
+## llama.cpp Build Settings
+
+Already built with:
+```bash
+cmake .. -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=121a -DLLAMA_CURL=OFF
+```
+
+## Server Configuration
+
+Default settings in `start-llama-server.sh`:
+- Host: 0.0.0.0
+- Port: 8002
+- Context: 4096 tokens (can increase to 8192 on Spark)
+- GPU layers: 99 (all layers)
+- Threads: $(nproc) - 20 ARM cores
+
+## CSDL Protocol
+
+The model uses **Compressed Semantic Data Language**:
+
+**Field codes**:
+- `t` = type
+- `n` = name
+- `d` = description
+- `p` = parameters
+- `r` = return
+- `cx` = confidence
+
+**Example output**:
+```json
+{
+  "t": "function",
+  "n": "search_knowledge",
+  "d": "Search knowledge base",
+  "p": {
+    "query": {"t": "string", "r": true},
+    "limit": {"t": "integer", "r": false, "default": 10}
+  },
+  "r": {"t": "array"},
+  "cx": 0.92
+}
+```
+
+## Scripts Available
+
+- `./convert-csdl-to-gguf.sh` - Convert SafeTensors to GGUF F16
+- `./start-llama-server.sh` - Start llama-server with CSDL-14B
+- `./backup-claude-conversations.sh` - Backup conversation history
+- `./save-conversation-summary.sh` - Save manual conversation summary
+
+## Desktop Launchers
+
+- Start CSDL Llama Server (media-playback-start icon)
+- Stop CSDL Llama Server (process-stop icon)
+
+## Conversation Backup System
+
+**ALREADY CONFIGURED** with PreCompact hook:
+- Automatically backs up before conversation compaction
+- Creates auto-summaries with context
+- Stores in `conversation-history/`
+- No manual intervention needed
+
+## API Endpoints
+
+When llama-server is running on port 8002:
+- Health: `http://localhost:8002/health`
+- Chat: `http://localhost:8002/v1/chat/completions`
+- Completion: `http://localhost:8002/completion`
+
+## Environment Variables
+
+Located in `.env` (gitignored):
+- `GITHUB_TOKEN` - Set
+- `GITHUB_USERNAME` - bodhifreeman-ux
+- `CSDL_SERVER_URL` - http://localhost:8002
+- See `.env.example` for full list
+
+## Current Tasks
+
+1. Copying model files (6 SafeTensors files, ~29.5GB total)
+2. Once complete: Convert to GGUF F16 using `./convert-csdl-to-gguf.sh`
+3. Test llama-server with `./start-llama-server.sh`
+
+## Optimization for Spark
+
+Take advantage of 128GB memory:
+- Use F16 or Q8_0 quantization (not Q4_K_M)
+- Increase context to 8192 tokens
+- Enable parallel requests (--parallel 8)
+- Use all 20 CPU threads
+- Larger batch sizes (--batch-size 512)
+
+## Integration Notes
+
+E3-DevMind-AI agents will communicate via:
+- CSDL protocol for inter-agent messages
+- llama-server endpoint at localhost:8002
+- 70-90% token reduction vs standard JSON
+
+## Documentation
+
+- Full setup: `CLAUDE.md` (in csdl-14b directory)
+- CSDL Protocol: `CSDL-14B/docs/CSDL_PROTOCOL.md`
+- Conversation backups: `CONVERSATION-HISTORY.md`
+- Quick start: `QUICK-START-CONVERSATION-BACKUP.md`
+
+## Git Repository
+
+- URL: https://github.com/bodhifreeman-ux/E3
+- Branch: main
+- License: MIT (E3), Apache 2.0 (CSDL-14B), Proprietary (E3-DevMind-AI)
+
+## Important Reminders
+
+1. **Always use high-quality quantizations** on this DGX Spark (Q8_0 or F16)
+2. **Conversation backups are automatic** via PreCompact hook
+3. **Model files are large** - 6 SafeTensors files totaling ~29.5GB
+4. **Grace Blackwell optimized** - use architecture 121a for CUDA builds
+5. **32 agents, not 36** - E3-DevMind-AI has 32 agents in 7 tiers
