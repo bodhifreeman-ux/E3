@@ -223,6 +223,83 @@ async def health():
     return {"status": "ok", "agent": "e3_devmind", "model": "csdl-14b"}
 
 
+@app.post("/info")
+@app.get("/info")
+async def info():
+    """
+    CopilotKit info endpoint - returns available agents and actions.
+    Required for CopilotKit frontend discovery.
+    """
+    return {
+        "sdkVersion": "0.1.74",
+        "actions": [
+            {
+                "name": "search_codebase",
+                "description": "Search the E3 codebase for relevant code snippets",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query for code content"},
+                        "file_pattern": {"type": "string", "description": "Glob pattern to filter files", "default": "*"}
+                    },
+                    "required": ["query"]
+                }
+            },
+            {
+                "name": "analyze_code",
+                "description": "Analyze a specific code file for structure, dependencies, and potential issues",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "file_path": {"type": "string", "description": "Path to the file to analyze"}
+                    },
+                    "required": ["file_path"]
+                }
+            },
+            {
+                "name": "generate_code",
+                "description": "Generate code based on a description",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string", "description": "Description of what the code should do"},
+                        "language": {"type": "string", "description": "Programming language", "default": "python"}
+                    },
+                    "required": ["description"]
+                }
+            },
+            {
+                "name": "run_tests",
+                "description": "Run tests for the E3 project",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "test_path": {"type": "string", "description": "Specific test file or directory", "default": ""}
+                    },
+                    "required": []
+                }
+            },
+            {
+                "name": "query_archon_knowledge",
+                "description": "Query the Archon knowledge base for relevant documentation and context",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Question or topic to search for"}
+                    },
+                    "required": ["query"]
+                }
+            }
+        ],
+        "agents": [
+            {
+                "name": "e3_devmind",
+                "description": "E3 DevMind - AI-powered development assistant using CSDL-14B"
+            }
+        ]
+    }
+
+
 def main():
     """Run the E3 DevMind AG-UI server"""
     port = int(os.getenv("E3_AGUI_PORT", "8100"))
