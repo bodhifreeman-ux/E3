@@ -6,8 +6,8 @@ import "@copilotkit/react-ui/styles.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CoAgents Starter",
-  description: "CoAgents Starter",
+  title: "E3 DevMind",
+  description: "E3 DevMind - AI-powered development assistant",
 };
 
 export default function RootLayout({ children }: { children: any }) {
@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: any }) {
     <html lang="en">
       <body>
         <CopilotKit
-          agent="sample_agent"
+          agent="e3_devmind"
           runtimeUrl="/api/copilotkit"
           showDevConsole={true}
         >
