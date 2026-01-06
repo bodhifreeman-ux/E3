@@ -153,6 +153,45 @@ E3-DevMind-AI agents will communicate via:
 - Branch: main
 - License: MIT (E3), Apache 2.0 (CSDL-14B), Proprietary (E3-DevMind-AI)
 
+## Version Control Policy
+
+**MANDATORY**: Commit and push changes frequently to avoid accumulating thousands of uncommitted changes.
+
+### When to Commit:
+- After completing any significant task or feature
+- After fixing bugs
+- After creating or modifying configuration files
+- After updating documentation
+- After adding new scripts or dependencies
+- Before ending a work session
+
+### Commit Process:
+1. Stage relevant changes: `git add <files>` or `git add -A` for all
+2. Commit with descriptive message: `git commit -m "Description of changes"`
+3. Push to remote: `git push origin main`
+
+### Commit Message Format:
+```
+<type>: <short description>
+
+Types: feat, fix, docs, style, refactor, test, chore
+Example: feat: Add AG-UI server with CopilotKit integration
+```
+
+### Files to Ignore (already in .gitignore):
+- `*.gguf` (model files)
+- `.env` (secrets)
+- `__pycache__/`
+- `node_modules/`
+- `*.log`
+- `conversation-history/`
+
+### Proactive Commits:
+Claude should proactively commit and push after completing work, especially when:
+- Multiple files have been created or modified
+- A logical unit of work is complete
+- The user might want to review changes
+
 ## Important Reminders
 
 1. **Always use high-quality quantizations** on this DGX Spark (Q8_0 or F16)
@@ -160,3 +199,4 @@ E3-DevMind-AI agents will communicate via:
 3. **Model files are large** - 6 SafeTensors files totaling ~29.5GB
 4. **Grace Blackwell optimized** - use architecture 121a for CUDA builds
 5. **32 agents, not 36** - E3-DevMind-AI has 32 agents in 7 tiers
+6. **Commit and push frequently** - Keep the git repo clean, avoid 10K+ uncommitted changes

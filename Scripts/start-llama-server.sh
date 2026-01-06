@@ -45,6 +45,7 @@ echo "Press Ctrl+C to stop the server"
 echo ""
 
 # Start llama-server with optimized settings for Grace Blackwell
+# CRITICAL: Force chatml format to prevent Hermes 2 Pro misdetection
 $LLAMA_SERVER \
     -m "$MODEL_PATH" \
     -c $CONTEXT_LENGTH \
@@ -55,4 +56,5 @@ $LLAMA_SERVER \
     --n-gpu-layers $GPU_LAYERS \
     --temp 0.7 \
     --top-p 0.9 \
+    --chat-template chatml \
     --verbose

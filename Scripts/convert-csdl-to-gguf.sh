@@ -41,11 +41,13 @@ echo "Starting conversion to GGUF F16..."
 echo "This may take 10-15 minutes..."
 echo ""
 
-# Convert to GGUF
+# Convert to GGUF (using venv)
+source $LLAMA_CPP_DIR/venv/bin/activate
 python3 $LLAMA_CPP_DIR/convert_hf_to_gguf.py \
     $MODEL_INPUT \
     --outfile $MODEL_OUTPUT \
     --outtype f16
+deactivate
 
 echo ""
 echo "=== Conversion Complete! ==="

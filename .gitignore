@@ -208,3 +208,24 @@ __marimo__/
 
 # Conversation history backups
 conversation-history/
+
+# E3 Project Specific
+
+# Large model files (GGUF)
+*.gguf
+
+# Node.js
+node_modules/
+.next/
+
+# Virtual environments
+*-venv/
+csdl-venv/
+
+# llama.cpp build artifacts
+llama.cpp/
+
+# Embedded git repositories (clone separately)
+E3-DevMind-AI/Archon/
+E3-DevMind-AI/CopilotKit/
+E3-DevMind-AI/ag-ui/
