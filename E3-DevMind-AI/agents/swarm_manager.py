@@ -81,17 +81,20 @@ def emit_event(event: SwarmEvent):
 
 class NemotronClient:
     """
-    Client for Nemotron Nano 30B reasoning model.
+    Client for Nemotron 3 Nano 30B reasoning model.
     Runs via llama.cpp on port 5001 for high-quality reasoning/analysis.
 
-    Architecture:
-        Nemotron handles reasoning/analysis → CSDL-14B encodes to CSDL format
+    Cognitive Architecture:
+        Nemotron (reasoning) → CSDL-14B (encoding) → CSDL Bus
+
+    Model: Nemotron 3 Nano 30B (MoE - 30B total, 3.5B active)
+           Hybrid Mamba-2 + Attention with 1M context support
     """
 
     def __init__(self, base_url: str = None):
         self.base_url = base_url or os.getenv("NEMOTRON_SERVER_URL", "http://localhost:5001")
         self._session = None
-        self.model_name = "nemotron-nano-30b"
+        self.model_name = "nemotron-3-nano-30b"
 
     async def _ensure_session(self):
         if self._session is None:

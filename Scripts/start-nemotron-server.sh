@@ -1,17 +1,15 @@
 #!/bin/bash
 
-# Start llama-server with Nemotron Nano model for reasoning
+# Start llama-server with Nemotron 3 Nano 30B for reasoning
+# Cognitive Architecture: Nemotron (reasoning) + CSDL-14B (encoding)
 # Designed for DGX Spark (128GB unified memory, Grace Blackwell)
 # Port 5001 - Reasoning model (CSDL-14B runs on port 5000)
 
 set -e
 
-# Model configuration
-# Nemotron Nano 8B is optimized for DGX Spark with NVFP4 quantization
-# If you have the 30B variant, update this path
-MODEL_NAME="nemotron-nano-8b"
-MODEL_PATH="/home/bodhifreeman/E3/nemotron-nano-8b.gguf"
-ALT_MODEL_PATH="/home/bodhifreeman/E3/nemotron-nano-30b.gguf"
+# Model configuration - Nemotron 3 Nano 30B (MoE - 3.5B active)
+MODEL_NAME="nemotron-3-nano-30b"
+MODEL_PATH="/home/bodhifreeman/E3/models/Nemotron-3-Nano-30B-A3B-Q6_K.gguf"
 
 LLAMA_SERVER="/home/bodhifreeman/E3/llama.cpp/build/bin/llama-server"
 LLAMA_LIB_PATH="/home/bodhifreeman/E3/llama.cpp/build/bin"
@@ -22,30 +20,28 @@ export LD_LIBRARY_PATH="$LLAMA_LIB_PATH:$LD_LIBRARY_PATH"
 # Server configuration - Port 5001 for reasoning model
 HOST="0.0.0.0"
 PORT="5001"
-CONTEXT_LENGTH="8192"  # Larger context for reasoning
+CONTEXT_LENGTH="32768"  # 32K context (model supports up to 1M)
 GPU_LAYERS="99"  # All layers on GPU
 THREADS=$(nproc)
 
-# Check for alternative model path (30B variant)
-if [ ! -f "$MODEL_PATH" ] && [ -f "$ALT_MODEL_PATH" ]; then
-    MODEL_PATH="$ALT_MODEL_PATH"
-    MODEL_NAME="nemotron-nano-30b"
-fi
-
-echo "========================================"
-echo "  Nemotron Reasoning Server (HYBRID)   "
-echo "========================================"
+echo "=============================================="
+echo "  Nemotron 3 Nano 30B - Cognitive Reasoning   "
+echo "=============================================="
 echo ""
 echo "Model:         $MODEL_NAME"
+echo "Architecture:  MoE (30B total, 3.5B active)"
 echo "Path:          $MODEL_PATH"
 echo "Host:          $HOST:$PORT"
 echo "Context:       $CONTEXT_LENGTH tokens"
 echo "GPU Layers:    $GPU_LAYERS (Grace Blackwell)"
 echo "CPU Threads:   $THREADS"
 echo ""
-echo "Architecture:  Nemotron(reason) → CSDL-14B(encode)"
-echo "CSDL Server:   http://localhost:5000"
-echo "Nemotron Server: http://localhost:$PORT"
+echo "Cognitive Architecture:"
+echo "  Nemotron (reason) -> CSDL-14B (encode) -> CSDL Bus"
+echo ""
+echo "Endpoints:"
+echo "  Nemotron:  http://localhost:$PORT"
+echo "  CSDL-14B:  http://localhost:5000"
 echo ""
 
 # Check if llama-server is built
@@ -55,46 +51,31 @@ if [ ! -f "$LLAMA_SERVER" ]; then
     exit 1
 fi
 
-# Check if model exists, provide download instructions if not
+# Check if model exists
 if [ ! -f "$MODEL_PATH" ]; then
     echo "=========================================="
     echo "  Model not found - Download Required    "
     echo "=========================================="
     echo ""
-    echo "Nemotron GGUF model not found at: $MODEL_PATH"
+    echo "Model not found at: $MODEL_PATH"
     echo ""
-    echo "To download Nemotron Nano 8B (recommended for DGX Spark):"
+    echo "Download Nemotron 3 Nano 30B Q6_K (33.5GB):"
     echo ""
-    echo "Option 1: Using Hugging Face CLI"
-    echo "  huggingface-cli download nvidia/Nemotron-Nano-8B-Instruct-GGUF \\"
-    echo "    --local-dir /home/bodhifreeman/E3/models \\"
-    echo "    --include \"*Q4_K_M.gguf\""
-    echo ""
-    echo "Option 2: Direct download (if available)"
-    echo "  cd /home/bodhifreeman/E3"
-    echo "  wget https://huggingface.co/nvidia/Nemotron-Nano-8B-Instruct-GGUF/resolve/main/nemotron-nano-8b-Q4_K_M.gguf"
-    echo "  mv nemotron-nano-8b-Q4_K_M.gguf nemotron-nano-8b.gguf"
-    echo ""
-    echo "Option 3: Convert from HuggingFace weights"
-    echo "  python /home/bodhifreeman/E3/llama.cpp/convert_hf_to_gguf.py \\"
-    echo "    nvidia/Nemotron-Nano-8B-Instruct \\"
-    echo "    --outfile /home/bodhifreeman/E3/nemotron-nano-8b.gguf \\"
-    echo "    --outtype f16"
-    echo ""
-    echo "For Nemotron Nano 30B (if available):"
-    echo "  Similar process with nvidia/Nemotron-Nano-30B-Instruct"
+    echo "  huggingface-cli download unsloth/Nemotron-3-Nano-30B-A3B-GGUF \\"
+    echo "    Nemotron-3-Nano-30B-A3B-Q6_K.gguf \\"
+    echo "    --local-dir /home/bodhifreeman/E3/models"
     echo ""
     exit 1
 fi
 
-echo "Starting Nemotron reasoning server..."
+echo "Starting Nemotron 3 Nano 30B reasoning server..."
 echo "API endpoint: http://localhost:$PORT/v1/chat/completions"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""
 
 # Start llama-server optimized for Grace Blackwell
-# Nemotron uses a specific chat template
+# Nemotron 3 uses <think></think> tokens for reasoning
 $LLAMA_SERVER \
     -m "$MODEL_PATH" \
     -c $CONTEXT_LENGTH \
@@ -105,4 +86,5 @@ $LLAMA_SERVER \
     --n-gpu-layers $GPU_LAYERS \
     --temp 0.7 \
     --top-p 0.9 \
+    --special \
     --verbose

@@ -16,9 +16,9 @@
 **Hardware**: NVIDIA DGX Spark (Grace Blackwell GB10, 128GB unified memory, CUDA 13.0)
 **PyTorch**: Built from source with CUDA 13.0 support for Blackwell architecture
 
-## Hybrid LLM Architecture (NEW)
+## Cognitive Architecture
 
-E3 DevMind now supports a **hybrid multi-model architecture** for optimal performance:
+E3 DevMind implements a **cognitive architecture** - a hybrid multi-model system where specialized models collaborate for optimal reasoning and protocol compliance:
 
 ```
 Human Query
@@ -102,7 +102,7 @@ Human Query
 ```
 +================================================================================================+
 |                              E3 DEVMIND PLATFORM v2.0                                          |
-|                         HYBRID LLM + CSDL-NATIVE ARCHITECTURE                                  |
+|                         COGNITIVE ARCHITECTURE + CSDL-NATIVE                                   |
 +================================================================================================+
 |                                                                                                |
 |    HUMAN INTERFACE LAYER                                                                       |
@@ -119,9 +119,9 @@ Human Query
 |    |        (Edge Only)                  |                                                     |
 |    +-------------------------------------+                                                     |
 |                       |                                                                        |
-|    HYBRID LLM LAYER   |                                                                        |
+|    HYBRID LLM LAYER                                                                            |
 |    +------------------+------------------+------------------+                                  |
-|    |   Nemotron Nano   |    CSDL-14B     |   Archon RAG    |                                  |
+|    | Nemotron 3 Nano   |    CSDL-14B     |   Archon RAG    |                                  |
 |    |    (Port 5001)    |   (Port 5000)   |  (8181/8051)    |                                  |
 |    |   Reasoning &     |   CSDL Format   |  Vector Search  |                                  |
 |    |    Analysis       |   Encoding      |  + Embeddings   |                                  |
@@ -160,12 +160,12 @@ Human Query
 
 ## Components
 
-### Hybrid LLM Stack (NEW)
+### Hybrid LLM Stack
 
 | Model | Port | Purpose | Base | Quantization |
 |-------|------|---------|------|--------------|
 | **CSDL-14B** | 5000 | CSDL Protocol Encoding | Qwen2.5-14B | F16 |
-| **Nemotron Nano** | 5001 | Reasoning & Analysis | NVIDIA 8B/30B | Q4_K_M |
+| **Nemotron 3 Nano 30B** | 5001 | Reasoning & Analysis | NVIDIA MoE 30B (3.5B active) | Q6_K |
 | **Safety Guard** | 5002 | Content Moderation | NVIDIA Aegis | Q4_K_M |
 
 ### CSDL-14B - Protocol Encoder
@@ -175,11 +175,12 @@ Human Query
 - **Inference**: llama.cpp (GGUF format)
 - **Hardware**: NVIDIA DGX Spark (Grace Blackwell GB10, 128GB unified memory)
 
-### Nemotron Nano - Reasoning Engine
-- **Base**: NVIDIA Nemotron Nano 8B V2 (or 30B for higher quality)
+### Nemotron 3 Nano 30B - Reasoning Engine
+- **Base**: NVIDIA Nemotron 3 Nano 30B (MoE - 3.5B active parameters)
+- **Architecture**: Hybrid Mamba-2 + Attention with MoE layers
 - **Role**: High-quality reasoning and analysis for each agent
-- **Performance**: ~33 tok/s on DGX Spark (8B), optimized for Grace Blackwell
-- **Inference**: llama.cpp with NVFP4 quantization support
+- **Context**: 1M tokens supported
+- **Performance**: Optimized for Grace Blackwell, Q6_K quantization (33.5GB)
 - **Flow**: Query → Nemotron(reason) → CSDL-14B(encode) → CSDL Bus
 
 ### Safety Guard - Content Moderation
@@ -293,9 +294,8 @@ E3/
 │   ├── start-e3-full-stack.sh       # Start all services
 │   ├── start-e3-devmind-swarm.sh    # Start DevMind swarm only
 │   ├── start-llama-server.sh        # Start CSDL-14B (port 5000)
-│   ├── start-nemotron-server.sh     # Start Nemotron reasoning (port 5001)
+│   ├── start-nemotron-server.sh     # Start Nemotron 3 Nano 30B (port 5001)
 │   ├── start-nemotron-guard-server.sh # Start Safety Guard (port 5002)
-│   ├── download-nemotron-models.sh  # Download Nemotron GGUF models
 │   └── stop-e3-full-stack.sh        # Stop all services
 ├── docs/                    # Documentation
 │   └── E3-DEVMIND-ARCHITECTURE.md

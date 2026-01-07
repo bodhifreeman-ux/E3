@@ -38,7 +38,7 @@ E3 DevMind AI is the world's first **CSDL-native** (Compressed Semantic Data Lan
 
 ```
 ┌════════════════════════════════════════════════════════════════════════════┐
-│              E3 DEVMIND AI v2.0 - HYBRID LLM ARCHITECTURE                   │
+│              E3 DEVMIND AI v2.0 - COGNITIVE ARCHITECTURE                     │
 │                   NVIDIA DGX Spark (Grace Blackwell)                        │
 │              1 PFLOPS | 128GB Unified Memory | 4TB Storage                  │
 └════════════════════════════════════════════════════════════════════════════┘
@@ -55,10 +55,10 @@ LAYER 0: HUMAN INTERFACE + SAFETY
     └── CSDL → Human language (output edge)
 
 LAYER 1: HYBRID LLM STACK
-├── ★ NEMOTRON NANO (Port 5001) - Reasoning Engine
-│   ├── High-quality reasoning & analysis
-│   ├── Agent-specific expert responses
-│   └── ~33 tok/s on DGX Spark (8B)
+├── ★ NEMOTRON 3 NANO 30B (Port 5001) - Reasoning Engine
+│   ├── MoE architecture (30B total, 3.5B active)
+│   ├── Hybrid Mamba-2 + Attention layers
+│   └── 1M context, Q6_K quantization (33.5GB)
 ├── ★ CSDL-14B (Port 5000) - Protocol Encoder
 │   ├── Converts reasoning to CSDL format
 │   ├── Trained on 67.5K CSDL examples
