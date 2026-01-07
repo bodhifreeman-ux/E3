@@ -1,6 +1,6 @@
 # E3 DevMind AI
 
-**The World's First CSDL-Native 32-Agent Cognitive Swarm**
+**The World's First CSDL-Native 32-Agent Cognitive Swarm with Hybrid LLM Architecture**
 
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
@@ -12,50 +12,62 @@
 
 ## 🎯 Overview
 
-E3 DevMind AI is the world's first **CSDL-native** (Compressed Semantic Data Language) agent swarm designed exclusively for E3 Consortium project development and global expansion. It features:
+E3 DevMind AI is the world's first **CSDL-native** (Compressed Semantic Data Language) agent swarm with a **hybrid LLM architecture** designed exclusively for E3 Consortium project development and global expansion. It features:
 
 - **32 specialized AI agents** communicating in pure CSDL
+- **Hybrid LLM stack**: Nemotron (reasoning) + CSDL-14B (encoding) + Safety Guard (moderation)
 - **Zero inter-agent translation overhead** (3-5x faster than traditional LLMs)
+- **Content safety guardrails** via NVIDIA Nemotron Guard at system edges
 - **Multimodal intelligence**: Voice, Vision, and Video processing
 - **Complete E3 knowledge mastery** with autonomous organization
-- **Predictive analytics** and proactive monitoring
-- **Optimized for NVIDIA DGX Spark** (Grace Blackwell GB10 - 1 PFLOP)
+- **Optimized for NVIDIA DGX Spark** (Grace Blackwell GB10 - 128GB unified memory)
 
 ### Key Advantages
 
+✅ **Hybrid Architecture**: Nemotron for reasoning quality, CSDL-14B for protocol compliance
 ✅ **CSDL-Native**: 70-90% token reduction through semantic compression
-✅ **Sub-millisecond latency**: Agent-to-agent communication via CSDL protocol
-✅ **Unlimited scale**: Near-zero cost per agent with CSDL-vLLM
+✅ **Sub-millisecond latency**: Agent-to-agent communication via CSDL protocol bus
+✅ **Safety Guardrails**: NVIDIA Aegis content moderation at system edges
+✅ **DGX Spark Optimized**: ~33 tok/s with Nemotron Nano 8B, NVFP4 quantization support
 ✅ **Multimodal**: Voice (Whisper), Vision (GPT-4V), Video processing
 ✅ **E3 Knowledge**: Ingests thousands of documents, notes, videos automatically
-✅ **Autonomous**: Predictive risk analysis, proactive monitoring, self-improvement
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│         E3 DEVMIND AI (CSDL-NATIVE ARCHITECTURE)             │
-│              NVIDIA DGX Spark (Grace Blackwell)              │
-│         1 PFLOPS | 128GB Unified Memory | 4TB Storage        │
-└──────────────────────────────────────────────────────────────┘
+┌════════════════════════════════════════════════════════════════════════════┐
+│              E3 DEVMIND AI v2.0 - HYBRID LLM ARCHITECTURE                   │
+│                   NVIDIA DGX Spark (Grace Blackwell)                        │
+│              1 PFLOPS | 128GB Unified Memory | 4TB Storage                  │
+└════════════════════════════════════════════════════════════════════════════┘
 
-LAYER 0: HUMAN INTERFACE
-├── Web Dashboard (React + FastAPI)
+LAYER 0: HUMAN INTERFACE + SAFETY
+├── Web Dashboard (CopilotKit React + AG-UI Server)
 ├── Voice Interface (Whisper + TTS)
 ├── CLI Interface
-└── ANLT Translation Layer
-    ├── Human language → CSDL (input)
-    └── CSDL → Human language (output)
+├── ★ SAFETY GUARD (Port 5002)
+│   ├── Input content check (harmful, PII, injection)
+│   └── Output content check (leak, inappropriate)
+└── ANLT Translation Layer (EDGE ONLY)
+    ├── Human language → CSDL (input edge)
+    └── CSDL → Human language (output edge)
 
-LAYER 1: CSDL-NATIVE FOUNDATION
-├── CSDL-vLLM (Custom LLM - processes CSDL natively)
+LAYER 1: HYBRID LLM STACK
+├── ★ NEMOTRON NANO (Port 5001) - Reasoning Engine
+│   ├── High-quality reasoning & analysis
+│   ├── Agent-specific expert responses
+│   └── ~33 tok/s on DGX Spark (8B)
+├── ★ CSDL-14B (Port 5000) - Protocol Encoder
+│   ├── Converts reasoning to CSDL format
+│   ├── Trained on 32K+ CSDL examples
+│   └── Ensures protocol compliance
 ├── CSDL Protocol Bus (zero translation overhead)
 └── Distributed Memory (Qdrant + PostgreSQL + Redis)
 
-LAYER 2: 32-AGENT COGNITIVE SWARM
-├── Tier 1: Command & Coordination (1 agent)
+LAYER 2: 32-AGENT COGNITIVE SWARM (Pure CSDL)
+├── Tier 1: Command & Coordination (1 agent - Oracle)
 ├── Tier 2: Strategic Intelligence (4 agents)
 ├── Tier 3: Deep Analysis (6 agents)
 ├── Tier 4: Execution Specialists (10 agents)
@@ -71,12 +83,73 @@ LAYER 3: MULTIMODAL INTELLIGENCE
 LAYER 4: E3 KNOWLEDGE ORGANISM
 ├── Document ingestion (PDFs, DOCX, images, videos)
 ├── Knowledge organization (graphs, hierarchies)
+├── Archon RAG (API:8181, MCP:8051, UI:3737)
 └── Semantic search (CSDL-native)
 
 LAYER 5: AUTONOMOUS OPERATIONS
 ├── Predictive analytics
 ├── Proactive monitoring
 └── Self-improvement
+```
+
+### Hybrid Data Flow
+
+```
+Human Query
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│ EDGE 0: Safety Guard (Port 5002) - Input Check                       │
+│         Checks for: harmful content, PII, prompt injection           │
+│         If BLOCKED → Return policy violation message                 │
+└──────────────────────────────────────────────────────────────────────┘
+    │ (if SAFE)
+    ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│ EDGE 1: ANLT Translation (Human → CSDL)                             │
+│         70-90% token reduction, semantic compression                 │
+└──────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│ ORACLE: Query Routing                                                │
+│         Determines which agents to query based on intent             │
+└──────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│ HYBRID AGENT PROCESSING (per selected agent):                        │
+│                                                                      │
+│   ┌─────────────────┐    ┌─────────────────┐    ┌──────────────────┐ │
+│   │ Nemotron Nano   │ →  │    CSDL-14B     │ →  │   CSDL Bus       │ │
+│   │  (Reasoning)    │    │   (Encoding)    │    │  (Pure CSDL)     │ │
+│   │ Port 5001       │    │ Port 5000       │    │                  │ │
+│   └─────────────────┘    └─────────────────┘    └──────────────────┘ │
+│                                                                      │
+│   Agent receives query → Nemotron reasons → CSDL-14B encodes output │
+└──────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│ ORACLE: Response Synthesis                                           │
+│         Merges agent CSDL responses, deduplicates findings           │
+└──────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│ EDGE 2: ANLT Translation (CSDL → Human)                             │
+│         Converts synthesized CSDL back to human language             │
+└──────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│ EDGE 3: Safety Guard (Port 5002) - Output Check                      │
+│         Checks for: leaked info, inappropriate content               │
+│         If unsafe → Redact or block output                          │
+└──────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+Human Response
 ```
 
 ---

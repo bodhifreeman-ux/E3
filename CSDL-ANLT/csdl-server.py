@@ -2,15 +2,20 @@
 """
 CSDL-14B Inference Server
 Uses HuggingFace Transformers with proper tokenization (bypasses llama.cpp bug)
+Supports OpenAI-compatible streaming for LangChain integration.
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+from threading import Thread
 import uvicorn
 import logging
+import json
+import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,6 +36,7 @@ class ChatCompletionRequest(BaseModel):
     temperature: float = 0.7
     max_tokens: int = 512
     top_p: float = 0.9
+    stream: bool = False  # Support streaming
 
 class ChatCompletionResponse(BaseModel):
     id: str
@@ -160,7 +166,59 @@ async def ollama_chat(request: dict):
         logger.error(f"Ollama chat error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/v1/chat/completions", response_model=ChatCompletionResponse)
+def generate_streaming_response(request: ChatCompletionRequest, inputs, request_id: str):
+    """Generator for SSE streaming responses"""
+    streamer = TextIteratorStreamer(tokenizer, skip_special_tokens=True, skip_prompt=True)
+
+    generation_kwargs = dict(
+        **inputs,
+        max_new_tokens=request.max_tokens,
+        temperature=max(request.temperature, 0.01),  # Avoid 0 temperature issues
+        top_p=request.top_p,
+        do_sample=True,
+        pad_token_id=tokenizer.eos_token_id,
+        streamer=streamer
+    )
+
+    # Run generation in a separate thread
+    thread = Thread(target=model.generate, kwargs=generation_kwargs)
+    thread.start()
+
+    # Stream tokens as they're generated
+    for text in streamer:
+        if text:
+            chunk = {
+                "id": request_id,
+                "object": "chat.completion.chunk",
+                "created": int(time.time()),
+                "model": request.model,
+                "choices": [{
+                    "index": 0,
+                    "delta": {"content": text},
+                    "finish_reason": None
+                }]
+            }
+            yield f"data: {json.dumps(chunk)}\n\n"
+
+    # Send final chunk with finish_reason
+    final_chunk = {
+        "id": request_id,
+        "object": "chat.completion.chunk",
+        "created": int(time.time()),
+        "model": request.model,
+        "choices": [{
+            "index": 0,
+            "delta": {},
+            "finish_reason": "stop"
+        }]
+    }
+    yield f"data: {json.dumps(final_chunk)}\n\n"
+    yield "data: [DONE]\n\n"
+
+    thread.join()
+
+
+@app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
     if model is None or tokenizer is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
@@ -179,12 +237,25 @@ async def chat_completions(request: ChatCompletionRequest):
         # Tokenize
         inputs = tokenizer(text, return_tensors="pt").to("cuda:0")
 
-        # Generate
+        request_id = f"chatcmpl-{int(time.time())}"
+
+        # Handle streaming
+        if request.stream:
+            return StreamingResponse(
+                generate_streaming_response(request, inputs, request_id),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                }
+            )
+
+        # Non-streaming response
         with torch.no_grad():
             outputs = model.generate(
                 **inputs,
                 max_new_tokens=request.max_tokens,
-                temperature=request.temperature,
+                temperature=max(request.temperature, 0.01),
                 top_p=request.top_p,
                 do_sample=True,
                 pad_token_id=tokenizer.eos_token_id
@@ -197,9 +268,8 @@ async def chat_completions(request: ChatCompletionRequest):
         )
 
         # Build response
-        import time
         response = {
-            "id": f"chatcmpl-{int(time.time())}",
+            "id": request_id,
             "object": "chat.completion",
             "created": int(time.time()),
             "model": request.model,

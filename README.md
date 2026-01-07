@@ -6,13 +6,73 @@
 
 | Component | Status | Port | Description |
 |-----------|--------|------|-------------|
-| **CSDL-14B Server** | ✅ Running | 5000 | HuggingFace Transformers on GPU |
+| **CSDL-14B Server** | ✅ Running | 5000 | CSDL Protocol Encoding (llama.cpp) |
+| **Nemotron Nano 8B** | ⏳ Pending | 5001 | Reasoning Model (llama.cpp) |
+| **Safety Guard 8B** | ⏳ Pending | 5002 | Content Moderation (llama.cpp) |
 | **AG-UI Server** | ✅ Running | 8100 | Agent-UI Protocol Server |
 | **DevMind UI** | ✅ Running | 3000 | CopilotKit React Frontend |
 | **Archon RAG** | ✅ Running | 8181, 8051, 3737 | RAG System |
 
 **Hardware**: NVIDIA DGX Spark (Grace Blackwell GB10, 128GB unified memory, CUDA 13.0)
 **PyTorch**: Built from source with CUDA 13.0 support for Blackwell architecture
+
+## Hybrid LLM Architecture (NEW)
+
+E3 DevMind now supports a **hybrid multi-model architecture** for optimal performance:
+
+```
+Human Query
+    │
+    ▼
+┌─────────────────┐
+│  Safety Guard   │  ← Content moderation (port 5002)
+│   (8B Nano)     │
+└────────┬────────┘
+         │ (if safe)
+         ▼
+┌─────────────────┐
+│      ANLT      │  ← Human → CSDL translation
+│   (Edge Only)   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Nemotron     │  ← High-quality reasoning (port 5001)
+│ (8B/30B Nano)  │
+└────────┬────────┘
+         │ (reasoning)
+         ▼
+┌─────────────────┐
+│   CSDL-14B     │  ← CSDL protocol encoding (port 5000)
+│   (Qwen2.5)    │
+└────────┬────────┘
+         │ (CSDL)
+         ▼
+┌─────────────────┐
+│  32-Agent      │  ← Pure CSDL inter-agent communication
+│    Swarm       │
+└────────┬────────┘
+         │ (CSDL)
+         ▼
+┌─────────────────┐
+│     ANLT       │  ← CSDL → Human translation
+│   (Edge Only)   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Safety Guard   │  ← Output moderation
+│   (8B Nano)     │
+└────────┬────────┘
+         │
+         ▼
+    Human Response
+```
+
+**Model Roles:**
+- **Nemotron Nano**: High-quality reasoning and analysis (optimized for DGX Spark)
+- **CSDL-14B**: Protocol encoding/decoding (trained on 32K CSDL examples)
+- **Safety Guard**: Content moderation at system edges
 
 ## Quick Start
 
@@ -40,37 +100,97 @@
 ## Architecture
 
 ```
-+====================================================================================+
-|                              E3 DEVMIND PLATFORM                                   |
-+====================================================================================+
-|                                                                                    |
-|    +------------------+      +------------------+      +------------------+        |
-|    |   CopilotKit     |      |     AG-UI        |      |    32-Agent      |        |
-|    |    React UI      |<---->|     Server       |<---->|     Swarm        |        |
-|    |   (Port 3000)    |      |   (Port 8100)    |      |   (LangGraph)    |        |
-|    +------------------+      +------------------+      +------------------+        |
-|                                      |                         |                   |
-|                                      v                         v                   |
-|    +-------------------------------------+   +-------------------------------------+
-|    |         CSDL-14B SERVER             |   |        ARCHON RAG SYSTEM           |
-|    |           (Port 5000)               |   |   API:8181 | MCP:8051 | UI:3737    |
-|    |      Ollama-Compatible API          |   +-------------------------------------+
-|    |      NVIDIA DGX Spark 128GB         |                                        |
-|    +-------------------------------------+                                        |
-+====================================================================================+
++================================================================================================+
+|                              E3 DEVMIND PLATFORM v2.0                                          |
+|                         HYBRID LLM + CSDL-NATIVE ARCHITECTURE                                  |
++================================================================================================+
+|                                                                                                |
+|    HUMAN INTERFACE LAYER                                                                       |
+|    +------------------+      +------------------+      +------------------+                    |
+|    |   CopilotKit     |      |     AG-UI        |      |   Safety Guard   |                    |
+|    |    React UI      |<---->|     Server       |<---->|    (Port 5002)   |                    |
+|    |   (Port 3000)    |      |   (Port 8100)    |      |  Content Filter  |                    |
+|    +------------------+      +------------------+      +------------------+                    |
+|                                      |                         |                               |
+|    EDGE TRANSLATION LAYER            |                         |                               |
+|    +-------------------------------------+                     |                               |
+|    |              ANLT                    |<--------------------+                               |
+|    |     Human ↔ CSDL Translation        |                                                     |
+|    |        (Edge Only)                  |                                                     |
+|    +-------------------------------------+                                                     |
+|                       |                                                                        |
+|    HYBRID LLM LAYER   |                                                                        |
+|    +------------------+------------------+------------------+                                  |
+|    |   Nemotron Nano   |    CSDL-14B     |   Archon RAG    |                                  |
+|    |    (Port 5001)    |   (Port 5000)   |  (8181/8051)    |                                  |
+|    |   Reasoning &     |   CSDL Format   |  Vector Search  |                                  |
+|    |    Analysis       |   Encoding      |  + Embeddings   |                                  |
+|    +------------------+------------------+------------------+                                  |
+|                       |                                                                        |
+|    CSDL PROTOCOL BUS  |                                                                        |
+|    +---------------------------------------------------------------------------+              |
+|    |                        PURE CSDL MESSAGE BUS                              |              |
+|    |   Zero-overhead | Sub-ms latency | 70-90% token reduction                 |              |
+|    +---------------------------------------------------------------------------+              |
+|                       |                                                                        |
+|    32-AGENT COGNITIVE SWARM                                                                    |
+|    +------------------+------------------+------------------+------------------+              |
+|    |    Tier 1        |     Tier 2       |     Tier 3       |    Tier 4        |              |
+|    |   Oracle (1)     |   Strategic (4)  |   Analysis (6)   | Execution (10)   |              |
+|    +------------------+------------------+------------------+------------------+              |
+|    |    Tier 5        |     Tier 6       |     Tier 7       |                  |              |
+|    | Knowledge (6)    |   Project (3)    |   Growth (2)     |                  |              |
+|    +------------------+------------------+------------------+------------------+              |
++================================================================================================+
+```
+
+### Data Flow (Hybrid Mode)
+
+```
+1. Human Input → Safety Guard (content check)
+2. Safety Guard → ANLT (Human → CSDL translation)
+3. ANLT → Oracle (CSDL query routing)
+4. Oracle → Selected Agents (parallel CSDL queries)
+   └─ Per Agent: Nemotron(reason) → CSDL-14B(encode)
+5. Agents → Oracle (CSDL responses via message bus)
+6. Oracle → ANLT (CSDL → Human synthesis)
+7. ANLT → Safety Guard (output check)
+8. Safety Guard → Human Response
 ```
 
 ## Components
 
-### CSDL-14B - Local LLM
+### Hybrid LLM Stack (NEW)
+
+| Model | Port | Purpose | Base | Quantization |
+|-------|------|---------|------|--------------|
+| **CSDL-14B** | 5000 | CSDL Protocol Encoding | Qwen2.5-14B | F16 |
+| **Nemotron Nano** | 5001 | Reasoning & Analysis | NVIDIA 8B/30B | Q4_K_M |
+| **Safety Guard** | 5002 | Content Moderation | NVIDIA Aegis | Q4_K_M |
+
+### CSDL-14B - Protocol Encoder
 - **Base**: Qwen2.5-14B-Instruct (14.7B parameters)
 - **Training**: 32,000+ CSDL compression examples
-- **Inference**: HuggingFace Transformers + PyTorch CUDA (NOT llama.cpp - tokenization bug on ARM64+Blackwell)
+- **Role**: Encodes natural language reasoning into CSDL format
+- **Inference**: llama.cpp (GGUF format)
 - **Hardware**: NVIDIA DGX Spark (Grace Blackwell GB10, 128GB unified memory)
-- **Format**: bfloat16 on GPU
+
+### Nemotron Nano - Reasoning Engine
+- **Base**: NVIDIA Nemotron Nano 8B V2 (or 30B for higher quality)
+- **Role**: High-quality reasoning and analysis for each agent
+- **Performance**: ~33 tok/s on DGX Spark (8B), optimized for Grace Blackwell
+- **Inference**: llama.cpp with NVFP4 quantization support
+- **Flow**: Query → Nemotron(reason) → CSDL-14B(encode) → CSDL Bus
+
+### Safety Guard - Content Moderation
+- **Base**: NVIDIA Aegis Content Safety / Llama Guard 3
+- **Role**: Input/output content filtering at system edges
+- **Checks**: Harmful content, PII, prompt injection, policy violations
+- **Latency**: <100ms classification per message
 
 ### E3-DevMind-AI - 32-Agent Swarm
 - **32 specialized agents** in 7-tier hierarchy
+- **Pure CSDL** inter-agent communication
 - **LangGraph** orchestration
 - **AG-UI Protocol** for streaming
 - **CopilotKit** React frontend
@@ -129,9 +249,13 @@ E3/
 │   ├── ui/                  # CopilotKit React frontend
 │   └── ux/                  # UX improvements
 ├── Scripts/                 # Startup/stop scripts
-│   ├── start-e3-full-stack.sh
-│   ├── start-e3-devmind-swarm.sh
-│   └── stop-e3-full-stack.sh
+│   ├── start-e3-full-stack.sh       # Start all services
+│   ├── start-e3-devmind-swarm.sh    # Start DevMind swarm only
+│   ├── start-llama-server.sh        # Start CSDL-14B (port 5000)
+│   ├── start-nemotron-server.sh     # Start Nemotron reasoning (port 5001)
+│   ├── start-nemotron-guard-server.sh # Start Safety Guard (port 5002)
+│   ├── download-nemotron-models.sh  # Download Nemotron GGUF models
+│   └── stop-e3-full-stack.sh        # Stop all services
 ├── docs/                    # Documentation
 │   └── E3-DEVMIND-ARCHITECTURE.md
 ├── csdl-14b-f16.gguf        # Model file (28GB, gitignored)

@@ -486,21 +486,79 @@ class ANLTTranslator:
         return f"Status: {status}" + (f" ({progress})" if progress else "")
 
     def _generic_format(self, csdl: Dict[str, Any]) -> str:
-        """Generic CSDL to text formatting"""
+        """Generic CSDL to text formatting - enhanced for swarm responses"""
         content = csdl.get(CSDL.CONTENT, {})
+        metadata = csdl.get(CSDL.METADATA, {})
+
+        parts = []
+
+        # Check for raw human-readable content first
+        if "raw" in content and isinstance(content["raw"], str) and len(content["raw"]) > 20:
+            return content["raw"]
 
         # Try common text fields
-        for field in ["text", "message", "response", "answer", "result", "s", "m", "r"]:
+        for field in ["text", "message", "response", "answer", "result"]:
             if field in content:
                 value = content[field]
-                if isinstance(value, str):
+                if isinstance(value, str) and len(value) > 10:
                     return value
 
-        # Reconstruct from keywords
+        # Handle summary field
+        if "s" in content:
+            summary = content["s"]
+            if isinstance(summary, str):
+                parts.append(summary)
+
+        # Handle agents list
+        if "agents" in content:
+            agents = content["agents"]
+            if isinstance(agents, list) and agents:
+                parts.append(f"\n\nAgents consulted: {', '.join(agents)}")
+
+        # Handle findings
+        if "f" in content:
+            findings = content["f"]
+            if isinstance(findings, list) and findings:
+                parts.append("\n\nKey findings:")
+                for i, f in enumerate(findings[:5], 1):
+                    if isinstance(f, str) and f.strip():
+                        parts.append(f"  {i}. {f[:200]}")
+
+        # Handle recommendations
+        if "r" in content:
+            recs = content["r"]
+            if isinstance(recs, list) and recs:
+                parts.append("\n\nRecommendations:")
+                for i, r in enumerate(recs[:5], 1):
+                    if isinstance(r, str):
+                        parts.append(f"  {i}. {r}")
+
+        # Handle operations/commands
+        if "op" in content:
+            op = content["op"]
+            target = content.get("target", "")
+            parts.append(f"Operation: {op}" + (f" on {target}" if target else ""))
+
+        # Add metadata context
+        if "agents_count" in metadata:
+            parts.append(f"\n\n({metadata['agents_count']} agents contributed to this response)")
+        if "routing" in metadata:
+            parts.append(f"Routing: {metadata['routing']}")
+
+        if parts:
+            return "\n".join(parts)
+
+        # Fallback: reconstruct from keywords
         if "k" in content:
             keywords = content["k"]
             intent = content.get("i", "")
-            return f"[{intent}] {' '.join(keywords)}"
+            intent_names = {
+                "rk": "Risk Analysis", "an": "Analysis", "pr": "Prediction",
+                "ds": "Design", "im": "Implementation", "ts": "Testing",
+                "op": "Optimization", "sc": "Security", "dc": "Documentation", "qr": "Query"
+            }
+            intent_name = intent_names.get(intent, intent)
+            return f"{intent_name}: {', '.join(keywords)}"
 
         return str(content)
 
