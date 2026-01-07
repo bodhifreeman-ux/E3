@@ -170,7 +170,7 @@ Human Query
 
 ### CSDL-14B - Protocol Encoder
 - **Base**: Qwen2.5-14B-Instruct (14.7B parameters)
-- **Training**: 32,000+ CSDL compression examples
+- **Training**: 67,500 CSDL compression examples
 - **Role**: Encodes natural language reasoning into CSDL format
 - **Inference**: llama.cpp (GGUF format)
 - **Hardware**: NVIDIA DGX Spark (Grace Blackwell GB10, 128GB unified memory)

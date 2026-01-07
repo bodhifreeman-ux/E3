@@ -61,7 +61,7 @@ LAYER 1: HYBRID LLM STACK
 │   └── ~33 tok/s on DGX Spark (8B)
 ├── ★ CSDL-14B (Port 5000) - Protocol Encoder
 │   ├── Converts reasoning to CSDL format
-│   ├── Trained on 32K+ CSDL examples
+│   ├── Trained on 67.5K CSDL examples
 │   └── Ensures protocol compliance
 ├── CSDL Protocol Bus (zero translation overhead)
 └── Distributed Memory (Qdrant + PostgreSQL + Redis)
