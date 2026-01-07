@@ -11,7 +11,7 @@ echo "  E3 DevMind Full Stack Shutdown"
 echo "=============================================="
 echo ""
 
-E3_ROOT="/home/bodhifreeman/E3/E3"
+E3_ROOT="/home/bodhifreeman/E3"
 ARCHON_DIR="$E3_ROOT/E3-DevMind-AI/Archon"
 
 # Colors for output

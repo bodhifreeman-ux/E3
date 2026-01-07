@@ -15,7 +15,7 @@ Usage:
 
 import asyncio
 import sys
-sys.path.insert(0, '/home/bodhifreeman/E3/E3/E3-DevMind-AI')
+sys.path.insert(0, '/home/bodhifreeman/E3/E3-DevMind-AI')
 
 from datetime import datetime, timezone
 from agents.archon_integration import ArchonBridge, ArchonConfig

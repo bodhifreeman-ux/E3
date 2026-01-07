@@ -10,7 +10,7 @@ echo "  E3 DevMind Swarm + AG-UI Launcher"
 echo "=============================================="
 echo ""
 
-E3_ROOT="/home/bodhifreeman/E3/E3"
+E3_ROOT="/home/bodhifreeman/E3"
 source "$E3_ROOT/.env" 2>/dev/null || true
 
 DEVMIND_DIR="$E3_ROOT/E3-DevMind-AI"

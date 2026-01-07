@@ -5,7 +5,7 @@
 
 set -e
 
-SUMMARY_DIR="/home/bodhifreeman/E3/E3/conversation-history/summaries"
+SUMMARY_DIR="/home/bodhifreeman/E3/conversation-history/summaries"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 DATE_READABLE=$(date +"%Y-%m-%d %H:%M:%S")
 

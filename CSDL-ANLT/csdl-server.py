@@ -44,7 +44,7 @@ def load_model():
     """Load CSDL-14B model with proper tokenization"""
     global model, tokenizer
 
-    model_path = "/home/bodhifreeman/E3/csdl-14b/model/merged_16bit"
+    model_path = "/home/bodhifreeman/E3/model-training/model/merged_16bit"
 
     logger.info(f"Loading model from {model_path}...")
 
@@ -55,11 +55,11 @@ def load_model():
         use_fast=True
     )
 
-    # Load model on CPU (temporary - need CUDA-enabled PyTorch)
+    # Load model on GPU with bfloat16 for Grace Blackwell
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
-        torch_dtype=torch.float32,
-        device_map="cpu",
+        torch_dtype=torch.bfloat16,
+        device_map="cuda:0",
         trust_remote_code=True,
         low_cpu_mem_usage=True
     )

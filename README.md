@@ -1,249 +1,231 @@
-# E3
+# E3 - Emergent Engineering Environment
 
-E3 infrastructure and agentic architecture - A comprehensive AI development platform integrating fine-tuned models with multi-agent systems.
+> AI-powered development platform with 32-agent swarm, local LLM inference, and proprietary CSDL compression protocol
 
-## Overview
+## Current Status
 
-E3 is a comprehensive AI development platform featuring:
+| Component | Status | Port | Description |
+|-----------|--------|------|-------------|
+| **CSDL-14B Server** | ✅ Running | 5000 | HuggingFace Transformers on GPU |
+| **AG-UI Server** | ✅ Running | 8100 | Agent-UI Protocol Server |
+| **DevMind UI** | ✅ Running | 3000 | CopilotKit React Frontend |
+| **Archon RAG** | ✅ Running | 8181, 8051, 3737 | RAG System |
 
-- **[CSDL-14B](CSDL-14B/)** - Fine-tuned 14B parameter LLM for Compressed Semantic Data Language
-- **[E3-DevMind-AI](E3-DevMind-AI/)** - 32-agent CSDL-native cognitive swarm for autonomous AI development
-- **llama.cpp** - CUDA-optimized inference engine for Grace Blackwell GPU
-- **Environment Configuration** - Centralized API key and service management
-
-## Architecture
-
-### CSDL-14B Model
-
-**The World's First Binary Protocol for AI Agent Communication**
-
-- **Base Model**: Qwen2.5-14B-Instruct (14.7B parameters)
-- **Training**: 32,000+ CSDL compression examples
-- **Format**: SafeTensors F16 / GGUF (Q4_K_M 8.4GB / FP16 28GB)
-- **Specialization**: Semantic compression + binary protocol (CSDL)
-- **Compression**: 90-98% token reduction through multi-layer optimization
-  - Semantic Compression (CSDL-14B trained LLM)
-  - Binary Protocol (CBP - MessagePack encoding)
-  - Deduplication (content-addressed storage)
-  - Delta Encoding (transmit only changes)
-- **Hardware**: Optimized for NVIDIA Grace Blackwell (128GB unified memory)
-
-#### CSDL Innovation
-
-**Before CSDL:**
-```json
-{"type": "analysis", "sender": "Analyzer", "receiver": "Strategist",
- "content": {"task": "analyze", "target": "doc"},
- "metadata": {"confidence": 0.85}}
-```
-**Size: 156 bytes**
-
-**After CSDL Binary Protocol (CBP):**
-```
-[0x01, 0x03, 0x05, [0x01, 0x02], {0x01: 0.85}]
-```
-**Size: 12 bytes (92% reduction)**
-
-### E3-DevMind-AI
-
-**The World's First CSDL-Native 32-Agent Cognitive Swarm**
-
-- **Agents**: 32 specialized AI agents in 7-tier hierarchy
-- **Architecture**: CSDL-native (zero inter-agent translation overhead)
-- **Performance**: 3-5x faster than traditional LLM agents
-- **Intelligence**: Multimodal (Voice, Vision, Video)
-- **Communication**: Pure CSDL protocol (70-90% token reduction)
-- **Features**: Autonomous development, predictive analytics, proactive monitoring
-- **Integration**: GitHub, Jira, Slack, and more
-- **Hardware**: Optimized for NVIDIA DGX Spark (Grace Blackwell GB10 - 1 PFLOP)
-
-#### 32-Agent Hierarchy
-
-- **Tier 1**: Command & Coordination (1 agent) - Oracle
-- **Tier 2**: Strategic Intelligence (4 agents) - Prophet, Sage, Strategist, Economist
-- **Tier 3**: Deep Analysis (6 agents) - Investigator, Critic, Visionary, Detective, Historian, Cartographer
-- **Tier 4**: Execution Specialists (10 agents) - Architect, Forge, Craftsman, Scientist, Sentinel, Ops, Optimizer, Documenter, Integrator, Guardian
-- **Tier 5**: E3 Knowledge Mastery (6 agents) - Librarian, Curator, Scholar, Synthesizer, Oracle KB, Learner
-- **Tier 6**: Project Management (3 agents) - Conductor, Tracker, Prioritizer
-- **Tier 7**: Market & Growth (2 agents) - Navigator, Catalyst
+**Hardware**: NVIDIA DGX Spark (Grace Blackwell GB10, 128GB unified memory, CUDA 13.0)
+**PyTorch**: Built from source with CUDA 13.0 support for Blackwell architecture
 
 ## Quick Start
 
-### Prerequisites
-
-- NVIDIA Grace Blackwell GPU (or compatible CUDA 13.0+ GPU)
-- 128GB+ RAM
-- Ubuntu 22.04+ (or compatible Linux distribution)
-- Python 3.11+
-- Git with LFS
-
-### Setup
-
-1. **Clone the repository**
+### Start Full Stack
 ```bash
-git clone https://github.com/bodhifreeman-ux/E3.git
-cd E3
+# Option 1: Desktop launcher
+# Click "Start E3 Full Stack" on desktop
+
+# Option 2: Command line
+./Scripts/start-e3-full-stack.sh
 ```
 
-2. **Configure environment**
+### Start DevMind Swarm Only
 ```bash
-cp .env.example .env
-# Edit .env and add your API keys
+# Requires CSDL and Archon running first
+./Scripts/start-e3-devmind-swarm.sh
 ```
 
-3. **Setup llama-server** (once model files are copied)
-```bash
-# Convert model to GGUF format
-./convert-csdl-to-gguf.sh
+### Access Points
+- **DevMind UI**: http://localhost:3000
+- **AG-UI Server**: http://localhost:8100
+- **CSDL API**: http://localhost:5000
+- **Archon UI**: http://localhost:3737
 
-# Start the server
-./start-llama-server.sh
+## Architecture
+
+```
++====================================================================================+
+|                              E3 DEVMIND PLATFORM                                   |
++====================================================================================+
+|                                                                                    |
+|    +------------------+      +------------------+      +------------------+        |
+|    |   CopilotKit     |      |     AG-UI        |      |    32-Agent      |        |
+|    |    React UI      |<---->|     Server       |<---->|     Swarm        |        |
+|    |   (Port 3000)    |      |   (Port 8100)    |      |   (LangGraph)    |        |
+|    +------------------+      +------------------+      +------------------+        |
+|                                      |                         |                   |
+|                                      v                         v                   |
+|    +-------------------------------------+   +-------------------------------------+
+|    |         CSDL-14B SERVER             |   |        ARCHON RAG SYSTEM           |
+|    |           (Port 5000)               |   |   API:8181 | MCP:8051 | UI:3737    |
+|    |      Ollama-Compatible API          |   +-------------------------------------+
+|    |      NVIDIA DGX Spark 128GB         |                                        |
+|    +-------------------------------------+                                        |
++====================================================================================+
 ```
 
-Or use the desktop launchers:
-- **Start CSDL Llama Server** - Launch the inference server
-- **Stop CSDL Llama Server** - Stop the running server
+## Components
 
-### Running llama-server
+### CSDL-14B - Local LLM
+- **Base**: Qwen2.5-14B-Instruct (14.7B parameters)
+- **Training**: 32,000+ CSDL compression examples
+- **Inference**: HuggingFace Transformers + PyTorch CUDA (NOT llama.cpp - tokenization bug on ARM64+Blackwell)
+- **Hardware**: NVIDIA DGX Spark (Grace Blackwell GB10, 128GB unified memory)
+- **Format**: bfloat16 on GPU
 
-The server will start on `http://localhost:8002` with:
-- Full GPU acceleration (all layers on Grace Blackwell)
-- 4096 token context window
-- OpenAI-compatible API endpoints
+### E3-DevMind-AI - 32-Agent Swarm
+- **32 specialized agents** in 7-tier hierarchy
+- **LangGraph** orchestration
+- **AG-UI Protocol** for streaming
+- **CopilotKit** React frontend
+
+### CSDL Compression Protocol (Proprietary)
+
+The **Compressed Semantic Data Language (CSDL)** protocol is the core of E3's efficiency. It provides 4 layers of compression:
+
+| Layer | Technology | Compression | Use Case |
+|-------|------------|-------------|----------|
+| **Layer 1** | ANLT Translation | Semantic extraction | Human ↔ CSDL at edges |
+| **Layer 2** | Semantic Embeddings | 80-90% | Dense vector similarity |
+| **Layer 3** | CBP Binary (MessagePack+LZ4) | 30-60% | Wire protocol |
+| **Layer 4** | Deduplication (xxHash) | **86%+** | Repeated content in pipelines |
+
+**CSDL Field Codes:**
+- `T`: Type (q=query, c=cmd, r=result, x=error)
+- `C`: Content (semantic payload with `i`=intent, `k`=keywords)
+- `R`: Response format (b=brief, d=detailed, s=structured)
+- `cx`: Context (scope, domain, temporal)
+- `p`: Priority (0-3)
+
+**Compression Results (Verified):**
+```
+Single message (CBP vs JSON):     ~30% reduction
+Multi-hop pipeline (4 agents):    ~46% reduction
+Repeated queries (10x same):      ~86% reduction
+Dedup hit rate:                   90%+
+```
+
+### CSDL-ANLT - Translation Layer
+- **ANLT** (Agent-Native Language Translation) for human ↔ CSDL at system edges
+- **CBP** (Compressed Binary Protocol) for agent-to-agent wire format
+- Human input/output remains natural language
+- All 32 agents communicate internally in pure CSDL
+
+### Archon - RAG System
+- **Supabase** pgvector for embeddings
+- **OpenAI** text-embedding-3-small
+- **CSDL-14B** for chat completion
+- **Docker** containerized
 
 ## Project Structure
 
 ```
 E3/
-├── CSDL-14B/              # Fine-tuned CSDL model
-│   ├── docs/              # Documentation (protocol, training, installation)
-│   ├── examples/          # Usage examples
-│   └── modelfiles/        # Ollama model configurations
-├── E3-DevMind-AI/         # 32-agent cognitive swarm
-│   ├── agents/            # 32 agent implementations
-│   ├── csdl/              # CSDL protocol & vLLM client
-│   ├── anlt/              # ANLT translation layer
-│   ├── devmind_core/      # Core system
-│   ├── multimodal/        # Voice, vision, video processing
-│   ├── knowledge/         # E3 knowledge system
-│   ├── autonomous/        # Autonomous operations
-│   ├── integrations/      # External integrations
-│   ├── api/               # REST & WebSocket APIs
-│   ├── ui/                # Web dashboard
-│   ├── cli/               # CLI interface
-│   ├── deployment/        # Docker & Kubernetes configs
-│   └── tests/             # Test suite
-├── llama.cpp/             # CUDA-optimized inference engine
-├── .env                   # Environment configuration (gitignored)
-├── .env.example           # Environment template
-├── convert-csdl-to-gguf.sh   # Model conversion script
-├── start-llama-server.sh     # Server startup script
-├── CSDL-LLAMA-SERVER-SETUP.md # Detailed setup guide
-└── README.md              # This file
+├── .claude/                 # Claude Code configuration
+│   └── .clauderules         # Project rules and context
+├── CSDL-14B/                # Model documentation
+│   └── docs/                # Protocol specs, training guides
+├── CSDL-ANLT/               # Translation layer
+│   ├── csdl-server.py       # Ollama-compatible API server
+│   └── src/cbp/             # CBP compression protocol
+├── E3-DevMind-AI/           # 32-agent swarm
+│   ├── agents/              # Agent implementations + AG-UI server
+│   ├── ui/                  # CopilotKit React frontend
+│   └── ux/                  # UX improvements
+├── Scripts/                 # Startup/stop scripts
+│   ├── start-e3-full-stack.sh
+│   ├── start-e3-devmind-swarm.sh
+│   └── stop-e3-full-stack.sh
+├── docs/                    # Documentation
+│   └── E3-DEVMIND-ARCHITECTURE.md
+├── csdl-14b-f16.gguf        # Model file (28GB, gitignored)
+└── .env                     # Environment variables (gitignored)
 ```
+
+## Hardware Requirements
+
+### Minimum
+- 16GB RAM
+- 8GB GPU VRAM
+- 50GB storage
+
+### Recommended (Current Setup)
+- **NVIDIA DGX Spark**
+- Grace Blackwell GB10 GPU
+- 128GB unified memory
+- 20 ARM cores
+- CUDA 13.0
 
 ## Environment Variables
 
-See [.env.example](.env.example) for all available configuration options.
+Copy `.env.example` to `.env` and configure:
 
-### Required
-- `GITHUB_TOKEN` - GitHub personal access token
-- `GITHUB_USERNAME` - Your GitHub username
+```bash
+# Required
+GITHUB_TOKEN=your_token
+OPENAI_API_KEY=your_key  # For Archon embeddings
 
-### Optional (for extended features)
-- `OPENAI_API_KEY` - OpenAI API for multimodal features
-- `ANTHROPIC_API_KEY` - Anthropic Claude API
-- `CSDL_VLLM_URL` - CSDL-vLLM endpoint
-- `JIRA_*` - Jira integration
-- `SLACK_*` - Slack integration
-- See `.env.example` for full list
+# Services
+CSDL_SERVER_URL=http://localhost:5000
+CSDL_SERVER_PORT=5000
+E3_AGUI_PORT=8100
+E3_UI_PORT=3000
+```
 
-## Hardware Recommendations
+## Desktop Launchers
 
-### Minimum
-- 12GB RAM
-- 8GB GPU VRAM
-- 100GB storage
+| Launcher | Description |
+|----------|-------------|
+| **Start E3 Full Stack** | CSDL + Archon + AG-UI + DevMind UI |
+| **Start E3 DevMind Swarm** | AG-UI + DevMind UI (requires Full Stack) |
+| **Stop E3 Full Stack** | Stop all services |
+| **Archon Web UI** | Open Archon admin (localhost:3737) |
 
-### Recommended (DGX Spark)
-- NVIDIA Grace Blackwell GB10
-- 128GB unified memory
-- 500GB+ NVMe storage
-- CUDA 13.0+
-- 1 PETAFLOP of FP4 AI performance
+## API Endpoints
+
+### CSDL-14B Server (Port 5000)
+```bash
+# Health check
+curl http://localhost:5000/api/tags
+
+# Chat completion (Ollama-compatible)
+curl http://localhost:5000/api/chat -d '{
+  "model": "csdl-14b",
+  "messages": [{"role": "user", "content": "Hello"}]
+}'
+```
+
+### AG-UI Server (Port 8100)
+```bash
+# Info endpoint
+curl http://localhost:8100/info
+
+# Health check
+curl http://localhost:8100/health
+```
+
+## Logs
+
+| Service | Log File |
+|---------|----------|
+| CSDL Server | `/tmp/csdl-server.log` |
+| AG-UI Server | `/tmp/e3-agui-server.log` |
+| DevMind UI | `/tmp/e3-ui.log` |
+| Archon | `docker logs archon-api` |
 
 ## Documentation
 
-### CSDL-14B
-- **[CSDL Protocol](CSDL-14B/docs/CSDL_PROTOCOL.md)** - Protocol specification
-- **[Training Guide](CSDL-14B/docs/TRAINING.md)** - Model training details
-- **[Installation](CSDL-14B/docs/INSTALLATION.md)** - Installation instructions
-- **[Server Setup](CSDL-LLAMA-SERVER-SETUP.md)** - llama-server configuration
-
-### E3-DevMind-AI
-- See [E3-DevMind-AI/README.md](E3-DevMind-AI/README.md) for complete documentation
-- Architecture, API reference, deployment guides, and more
-
-## Performance
-
-### CSDL-14B Compression Benchmarks
-
-| Test Case | JSON | CBP | Reduction |
-|-----------|------|-----|-----------|
-| Simple Agent Message | 175B | 56B | **68.0%** |
-| Full Analysis Output | 887B | 592B | 33.3% |
-| Strategy Response | 893B | 575B | 35.6% |
-| **With Deduplication** | 887B | 16B | **98.2%** |
-| **With Delta Encoding** | Full | Delta | **63-77%** |
-
-### E3-DevMind-AI Performance
-
-With Grace Blackwell GPU:
-- **Query latency**: <100ms (CSDL-native agents)
-- **Agent coordination**: <10ms (sub-millisecond protocol bus)
-- **Knowledge retrieval**: <50ms (vector search)
-- **Token reduction**: 70-90% (ANLT compression)
-- **Throughput**: 1000+ queries/sec
+- **[Architecture](docs/E3-DEVMIND-ARCHITECTURE.md)** - Full system documentation
+- **[CSDL Protocol](CSDL-14B/docs/CSDL_PROTOCOL.md)** - Compression protocol spec
+- **[ANLT Layer](CSDL-ANLT/docs/03_CSDL_ANLT_README.md)** - Translation layer
 
 ## License
 
-MIT License - See individual component licenses:
-- CSDL-14B: Apache 2.0 (base model: Qwen License)
-- E3-DevMind-AI: Proprietary (E3 Consortium)
-- llama.cpp: MIT License
+- **E3 Platform**: MIT License
+- **CSDL-14B**: Apache 2.0 (Base: Qwen License)
+- **E3-DevMind-AI**: Proprietary (E3 Consortium)
 
-## Contributing
+## Repository
 
-This is a private repository. For access or collaboration inquiries, contact the repository owner.
-
-## Support
-
-For issues or questions:
-- Open an issue in this repository
-- Check component documentation in respective `docs/` directories
-
-## Roadmap
-
-- [x] CSDL-14B model fine-tuning
-- [x] llama.cpp CUDA integration for Grace Blackwell
-- [x] Desktop launcher creation
-- [x] Environment configuration
-- [ ] Complete model file transfer (in progress)
-- [ ] Model conversion to GGUF F16
-- [ ] E3-DevMind-AI integration with CSDL-14B
-- [ ] Multi-agent system deployment
-- [ ] Production deployment on DGX Spark
-
-## Key Innovations
-
-1. **First binary protocol for AI agent communication** - All existing frameworks use JSON/text
-2. **CSDL-native agent swarm** - Zero translation overhead between agents
-3. **Semantic deduplication** - No repeated context in multi-agent pipelines
-4. **Learned compression** - LLM trained specifically for protocol output
-5. **98% compression** - Industry-leading efficiency
-6. **Sub-millisecond agent coordination** - CSDL protocol bus
-7. **Multimodal intelligence** - Voice, vision, and video processing
+- **URL**: https://github.com/bodhifreeman-ux/E3
+- **Branch**: main
 
 ---
 
-**E3 - Empowering AI Development with Advanced Multi-Agent Systems**
+*E3 - Emergent Engineering Environment*

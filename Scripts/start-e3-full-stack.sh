@@ -14,7 +14,7 @@ echo "=============================================="
 echo ""
 
 # Load environment variables
-E3_ROOT="/home/bodhifreeman/E3/E3"
+E3_ROOT="/home/bodhifreeman/E3"
 source "$E3_ROOT/.env" 2>/dev/null || true
 
 ARCHON_DIR="$E3_ROOT/E3-DevMind-AI/Archon"

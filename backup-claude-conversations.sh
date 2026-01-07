@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-BACKUP_DIR="/home/bodhifreeman/E3/E3/conversation-history"
+BACKUP_DIR="/home/bodhifreeman/E3/conversation-history"
 CLAUDE_CACHE_DIR="/home/bodhifreeman/.claude"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 

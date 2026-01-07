@@ -5,7 +5,7 @@
 
 set -e
 
-SCRIPT_DIR="/home/bodhifreeman/E3/E3"
+SCRIPT_DIR="/home/bodhifreeman/E3"
 BACKUP_SCRIPT="$SCRIPT_DIR/backup-claude-conversations.sh"
 
 echo "=== Claude Conversation Backup Setup ==="
@@ -46,7 +46,7 @@ echo ""
 echo "=== Setup Complete ==="
 echo ""
 echo "📅 Automated backup schedule: Daily at 2:00 AM"
-echo "📂 Backup location: /home/bodhifreeman/E3/E3/conversation-history/"
+echo "📂 Backup location: /home/bodhifreeman/E3/conversation-history/"
 echo "📜 Log file: /var/log/claude-backup.log"
 echo ""
 echo "To run backup manually:"

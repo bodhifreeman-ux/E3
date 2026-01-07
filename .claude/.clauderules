@@ -15,85 +15,120 @@ This is the **E3 platform** featuring:
 1. **CSDL-14B** - Fine-tuned 14B parameter LLM for Compressed Semantic Data Language
    - Base: Qwen2.5-14B-Instruct (14.7B parameters)
    - Training: 32,000+ CSDL compression examples
-   - Format: SafeTensors F16 → GGUF
+   - Format: SafeTensors F16
    - Compression: 90-98% token reduction
 
 2. **E3-DevMind-AI** - 32-agent CSDL-native cognitive swarm
-   - 32 specialized agents in 7-tier hierarchy
-   - Multimodal: Voice, Vision, Video
+   - 32 specialized agents in functional groups
    - Pure CSDL protocol communication
 
-## Quantization Strategy for DGX Spark
+## CRITICAL: llama.cpp Tokenization Bug
 
-With 128GB unified memory, prefer **high-quality quantizations**:
+**llama.cpp has a tokenization bug on ARM64 + Blackwell architecture!**
 
-**Recommended**: Q8_0 (14GB) or F16 (28GB)
-- Q8_0: Near-lossless quality, 2x faster than F16
-- F16: Maximum quality, slower inference
+- The model outputs garbage/Chinese characters when using llama.cpp
+- This is NOT a model issue - the fine-tuning is correct
+- **Solution**: Use the Python HuggingFace server on port 5000 instead
+- Requires PyTorch built with CUDA from source (2-4 hour build)
 
-**NOT recommended**: Q4_K_M (that's for 32GB systems like Geekom)
+See `CSDL-14B/docs/CSDL-MODEL-DIAGNOSTIC.md` for full investigation.
 
 ## Model Paths
 
-- **Source models**: `/home/bodhifreeman/E3/csdl-14b/model/merged_16bit/`
-- **Converted GGUF**: `/home/bodhifreeman/E3/E3/csdl-14b-f16.gguf`
-- **llama.cpp**: `/home/bodhifreeman/E3/E3/llama.cpp/`
-- **llama-server**: `/home/bodhifreeman/E3/E3/llama.cpp/build/bin/llama-server`
+- **Source models**: `/home/bodhifreeman/E3/model-training/model/merged_16bit/`
+- **Converted GGUF**: `/home/bodhifreeman/E3/csdl-14b-f16.gguf` (for llama.cpp - HAS BUGS)
+- **llama.cpp**: `/home/bodhifreeman/E3/llama.cpp/`
+- **CSDL-ANLT Server**: `/home/bodhifreeman/E3/CSDL-ANLT/csdl-server.py`
 
-## llama.cpp Build Settings
+## Service Ports
 
-Already built with:
+| Service | Port | Description | Status |
+|---------|------|-------------|--------|
+| **CSDL Server** | **5000** | **CSDL-14B inference (Python/HuggingFace) - PRIMARY** | **Working** |
+| Llama Server | 8002 | llama.cpp (HAS TOKENIZATION BUGS on ARM64+Blackwell) | DO NOT USE |
+| Archon API | 8181 | Archon REST API | Docker |
+| Archon MCP | 8051 | Archon MCP Server | Docker |
+| Archon UI | 3737 | Archon Web Interface | Docker |
+| E3 AG-UI Server | 8100 | CopilotKit backend | Python/FastAPI |
+| E3 DevMind UI | 3000 | CopilotKit frontend | Next.js |
+
+**Note**: The Python CSDL server on port 5000 is the CORRECT backend. It uses HuggingFace Transformers with proper tokenization. The llama.cpp server on port 8002 has tokenization bugs on this hardware - DO NOT USE.
+
+### Quick Port Check Command
 ```bash
-cmake .. -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=121a -DLLAMA_CURL=OFF
+for port in 5000 8100 8181 8051 3737 3000; do
+  nc -z localhost $port 2>/dev/null && echo "Port $port: UP" || echo "Port $port: DOWN"
+done
 ```
 
-## Server Configuration
+## PyTorch CUDA Build
 
-Default settings in `start-llama-server.sh`:
-- Host: 0.0.0.0
-- Port: 8002
-- Context: 4096 tokens (can increase to 8192 on Spark)
-- GPU layers: 99 (all layers)
-- Threads: $(nproc) - 20 ARM cores
+PyTorch with CUDA must be built from source for ARM64 + Blackwell:
 
-## CSDL Protocol
+```bash
+cd /home/bodhifreeman/E3/Scripts
+./build-pytorch-cuda.sh
+```
 
-The model uses **Compressed Semantic Data Language**:
+Build takes 2-4 hours. After build:
+```bash
+source /home/bodhifreeman/pytorch-build/pytorch-venv/bin/activate
+pip install transformers accelerate fastapi uvicorn
+```
 
-**Field codes**:
-- `t` = type
-- `n` = name
-- `d` = description
-- `p` = parameters
-- `r` = return
-- `cx` = confidence
+Then update `CSDL-ANLT/csdl-server.py`:
+- Change `device_map="cpu"` to `device_map="cuda:0"`
+- Change `torch_dtype=torch.float32` to `torch_dtype=torch.bfloat16`
 
-**Example output**:
+## CSDL Protocol (4-Layer Compression)
+
+The model uses **Compressed Semantic Data Language** with 4 layers of compression:
+
+| Layer | Technology | Compression | Description |
+|-------|------------|-------------|-------------|
+| Layer 1 | ANLT Translation | Semantic extraction | Natural language → CSDL field codes |
+| Layer 2 | Semantic Embeddings | 80-90% | Dense vector representations |
+| Layer 3 | CBP Binary | 30-60% | MessagePack + LZ4 wire format |
+| Layer 4 | Deduplication | **86%+** | xxHash content-addressed storage |
+
+**CSDL Field Codes (single-char for max compression):**
+- `T` = Type (q=query, c=cmd, r=result, x=error, h=handoff)
+- `C` = Content (`{i: intent, k: keywords}`)
+- `R` = Response format (b=brief, d=detailed, s=structured)
+- `cx` = Context (scope, domain, temporal)
+- `p` = Priority (0-3: low, normal, high, critical)
+- `m` = Metadata (optional)
+
+**Intent Codes:**
+- `an`=analyze, `rk`=risk, `ds`=design, `im`=implement
+- `ts`=test, `op`=optimize, `sc`=security, `qr`=query
+
+**Example CSDL:**
 ```json
-{
-  "t": "function",
-  "n": "search_knowledge",
-  "d": "Search knowledge base",
-  "p": {
-    "query": {"t": "string", "r": true},
-    "limit": {"t": "integer", "r": false, "default": 10}
-  },
-  "r": {"t": "array"},
-  "cx": 0.92
-}
+{"T":"q","C":{"i":"sc","k":["auth","risks"]},"cx":{"d":"auth"},"R":"d","p":1}
 ```
 
-## Scripts Available
+**Verified Compression Results:**
+- Single message (CBP vs JSON): ~30% reduction
+- Multi-hop pipeline (4 agents): ~46% reduction
+- Repeated queries (10x same): **86% reduction**
+- Dedup hit rate: 90%+
 
-- `./convert-csdl-to-gguf.sh` - Convert SafeTensors to GGUF F16
-- `./start-llama-server.sh` - Start llama-server with CSDL-14B
-- `./backup-claude-conversations.sh` - Backup conversation history
-- `./save-conversation-summary.sh` - Save manual conversation summary
+## Scripts Available (in /home/bodhifreeman/E3/Scripts/)
+
+- `start-e3-full-stack.sh` - Start all services (CSDL, Archon, AG-UI, UI)
+- `stop-e3-full-stack.sh` - Stop all services
+- `start-e3-devmind-swarm.sh` - Start AG-UI + DevMind UI
+- `build-pytorch-cuda.sh` - Build PyTorch with CUDA from source
+- `convert-csdl-to-gguf.sh` - Convert SafeTensors to GGUF (for llama.cpp)
 
 ## Desktop Launchers
 
-- Start CSDL Llama Server (media-playback-start icon)
-- Stop CSDL Llama Server (process-stop icon)
+Located in `~/Desktop/`:
+- **Start E3 Full Stack** - Starts CSDL + Archon + AG-UI + DevMind UI
+- **Start E3 DevMind Swarm** - Starts AG-UI + DevMind UI (requires Full Stack first)
+- **Stop E3 Full Stack** - Stops all services
+- **Archon Web UI** - Opens Archon UI in browser (http://localhost:3737)
 
 ## Conversation Backup System
 
@@ -105,47 +140,19 @@ The model uses **Compressed Semantic Data Language**:
 
 ## API Endpoints
 
-When llama-server is running on port 8002:
-- Health: `http://localhost:8002/health`
-- Chat: `http://localhost:8002/v1/chat/completions`
-- Completion: `http://localhost:8002/completion`
+When Python CSDL server is running on port 5000:
+- Health: `http://localhost:5000/health`
+- Models (Ollama-compatible): `http://localhost:5000/api/tags`
+- Chat (Ollama-compatible): `http://localhost:5000/api/chat`
+- Chat (OpenAI-compatible): `http://localhost:5000/v1/chat/completions`
 
 ## Environment Variables
 
 Located in `.env` (gitignored):
-- `GITHUB_TOKEN` - Set
-- `GITHUB_USERNAME` - bodhifreeman-ux
-- `CSDL_SERVER_URL` - http://localhost:8002
+- `CSDL_SERVER_PORT=5000`
+- `CSDL_SERVER_URL=http://localhost:5000`
+- `E3_AGUI_URL=http://localhost:8100`
 - See `.env.example` for full list
-
-## Current Tasks
-
-1. Copying model files (6 SafeTensors files, ~29.5GB total)
-2. Once complete: Convert to GGUF F16 using `./convert-csdl-to-gguf.sh`
-3. Test llama-server with `./start-llama-server.sh`
-
-## Optimization for Spark
-
-Take advantage of 128GB memory:
-- Use F16 or Q8_0 quantization (not Q4_K_M)
-- Increase context to 8192 tokens
-- Enable parallel requests (--parallel 8)
-- Use all 20 CPU threads
-- Larger batch sizes (--batch-size 512)
-
-## Integration Notes
-
-E3-DevMind-AI agents will communicate via:
-- CSDL protocol for inter-agent messages
-- llama-server endpoint at localhost:8002
-- 70-90% token reduction vs standard JSON
-
-## Documentation
-
-- Full setup: `CLAUDE.md` (in csdl-14b directory)
-- CSDL Protocol: `CSDL-14B/docs/CSDL_PROTOCOL.md`
-- Conversation backups: `CONVERSATION-HISTORY.md`
-- Quick start: `QUICK-START-CONVERSATION-BACKUP.md`
 
 ## Git Repository
 
@@ -165,11 +172,6 @@ E3-DevMind-AI agents will communicate via:
 - After adding new scripts or dependencies
 - Before ending a work session
 
-### Commit Process:
-1. Stage relevant changes: `git add <files>` or `git add -A` for all
-2. Commit with descriptive message: `git commit -m "Description of changes"`
-3. Push to remote: `git push origin main`
-
 ### Commit Message Format:
 ```
 <type>: <short description>
@@ -178,25 +180,73 @@ Types: feat, fix, docs, style, refactor, test, chore
 Example: feat: Add AG-UI server with CopilotKit integration
 ```
 
-### Files to Ignore (already in .gitignore):
-- `*.gguf` (model files)
-- `.env` (secrets)
-- `__pycache__/`
-- `node_modules/`
-- `*.log`
-- `conversation-history/`
+## Code Analysis Best Practices
 
-### Proactive Commits:
-Claude should proactively commit and push after completing work, especially when:
-- Multiple files have been created or modified
-- A logical unit of work is complete
-- The user might want to review changes
+**BEFORE making changes to existing code:**
+
+1. **Check Git History First**
+   - Run `git log --oneline -10` to see recent commits
+   - Run `git diff HEAD -- <file>` to see uncommitted changes
+   - This prevents recreating solutions that already exist
+
+2. **Read README Files**
+   - CSDL-14B/README.md - Model and CBP protocol
+   - CSDL-ANLT/README.md - Python server setup
+   - docs/E3-DEVMIND-ARCHITECTURE.md - Full architecture
+   - docs/PYTORCH-BUILD-GUIDE.md - PyTorch build instructions
+
+3. **Check Diagnostic Reports**
+   - CSDL-14B/docs/CSDL-MODEL-DIAGNOSTIC.md - Known issues and solutions
+
+## CopilotKit Integration Patterns
+
+**Working configuration for CopilotKit 1.50.x with AG-UI Server:**
+
+```typescript
+// route.ts - Frontend API Route
+import { LangGraphHttpAgent } from "@copilotkit/runtime/langgraph";
+
+const e3DevMindAgent = new LangGraphHttpAgent({
+  name: "e3_devmind",
+  description: "E3 DevMind - AI-powered development assistant using CSDL-14B",
+  url: process.env.E3_AGUI_URL || "http://localhost:8100",
+});
+
+const runtime = new CopilotRuntime({
+  remoteEndpoints: [
+    copilotKitEndpoint({
+      url: AGUI_URL,
+    }),
+  ],
+  agents: {
+    e3_devmind: e3DevMindAgent,  // CRITICAL: Must register agent explicitly
+  },
+});
+```
+
+**Key requirements:**
+- Import `LangGraphHttpAgent` from `@copilotkit/runtime/langgraph`
+- Register agents explicitly in `runtime.agents`
+- AG-UI server must use `LangGraphAGUIAgent` from `copilotkit` with path `/`
 
 ## Important Reminders
 
-1. **Always use high-quality quantizations** on this DGX Spark (Q8_0 or F16)
-2. **Conversation backups are automatic** via PreCompact hook
-3. **Model files are large** - 6 SafeTensors files totaling ~29.5GB
-4. **Grace Blackwell optimized** - use architecture 121a for CUDA builds
-5. **32 agents, not 36** - E3-DevMind-AI has 32 agents in 7 tiers
-6. **Commit and push frequently** - Keep the git repo clean, avoid 10K+ uncommitted changes
+1. **USE PYTHON SERVER ON PORT 5000** - llama.cpp has tokenization bugs on ARM64+Blackwell
+2. **Build PyTorch with CUDA** before running the CSDL server with GPU
+3. **Model files are large** - SafeTensors totaling ~29.5GB
+4. **32 agents, not 36** - E3-DevMind-AI has 32 agents
+5. **Commit and push frequently** - Keep the git repo clean
+
+## Troubleshooting
+
+### Model outputs garbage/Chinese characters
+- **Cause**: Using llama.cpp which has tokenization bug on ARM64+Blackwell
+- **Solution**: Use Python CSDL server on port 5000 instead
+
+### CSDL server won't start with GPU
+- **Cause**: PyTorch not built with CUDA
+- **Solution**: Run `./Scripts/build-pytorch-cuda.sh` (2-4 hours)
+
+### AG-UI server shows "Agent not found"
+- **Cause**: Agent not registered in CopilotKit runtime
+- **Solution**: Add agent to `runtime.agents` in route.ts

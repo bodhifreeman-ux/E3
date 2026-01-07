@@ -23,7 +23,7 @@ import sys
 from datetime import datetime
 
 # Add parent to path for imports
-sys.path.insert(0, '/home/bodhifreeman/E3/E3/E3-DevMind-AI')
+sys.path.insert(0, '/home/bodhifreeman/E3/E3-DevMind-AI')
 
 from agents.collaboration import (
     # Error handling

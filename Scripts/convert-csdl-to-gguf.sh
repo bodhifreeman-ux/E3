@@ -5,9 +5,9 @@
 
 set -e
 
-MODEL_INPUT="/home/bodhifreeman/E3/csdl-14b/model/merged_16bit"
-MODEL_OUTPUT="/home/bodhifreeman/E3/E3/csdl-14b-f16.gguf"
-LLAMA_CPP_DIR="/home/bodhifreeman/E3/E3/llama.cpp"
+MODEL_INPUT="/home/bodhifreeman/E3/model-training/model/merged_16bit"
+MODEL_OUTPUT="/home/bodhifreeman/E3/csdl-14b-f16.gguf"
+LLAMA_CPP_DIR="/home/bodhifreeman/E3/llama.cpp"
 
 echo "=== CSDL-14B to GGUF Conversion ==="
 echo "Input:  $MODEL_INPUT"

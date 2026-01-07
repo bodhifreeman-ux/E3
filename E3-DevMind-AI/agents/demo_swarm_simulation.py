@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List
 from dataclasses import dataclass, asdict
 
-sys.path.insert(0, '/home/bodhifreeman/E3/E3/E3-DevMind-AI')
+sys.path.insert(0, '/home/bodhifreeman/E3/E3-DevMind-AI')
 
 from agents.collaboration import (
     get_coordinator,

@@ -5,8 +5,12 @@
 
 set -e
 
-MODEL_PATH="/home/bodhifreeman/E3/E3/csdl-14b-f16.gguf"
-LLAMA_SERVER="/home/bodhifreeman/E3/E3/llama.cpp/build/bin/llama-server"
+MODEL_PATH="/home/bodhifreeman/E3/csdl-14b-f16.gguf"
+LLAMA_SERVER="/home/bodhifreeman/E3/llama.cpp/build/bin/llama-server"
+LLAMA_LIB_PATH="/home/bodhifreeman/E3/llama.cpp/build/bin"
+
+# Set library path for llama.cpp shared libraries
+export LD_LIBRARY_PATH="$LLAMA_LIB_PATH:$LD_LIBRARY_PATH"
 
 # Server configuration
 HOST="0.0.0.0"
