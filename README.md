@@ -213,6 +213,22 @@ The **Compressed Semantic Data Language (CSDL)** protocol is the core of E3's ef
 - `cx`: Context (scope, domain, temporal)
 - `p`: Priority (0-3)
 
+**Agent Response CSDL Structure:**
+```json
+{
+  "T": "r",
+  "C": {
+    "s": "summary of findings",
+    "a": "detailed analysis",
+    "f": ["finding1", "finding2"],
+    "r": ["recommendation1", "recommendation2"],
+    "w": ["warning1"]
+  },
+  "p": 1,
+  "m": {"agents_count": 4, "routing": "parallel"}
+}
+```
+
 **Compression Results (Verified):**
 ```
 Single message (CBP vs JSON):     ~30% reduction
@@ -226,6 +242,31 @@ Dedup hit rate:                   90%+
 - **CBP** (Compressed Binary Protocol) for agent-to-agent wire format
 - Human input/output remains natural language
 - All 32 agents communicate internally in pure CSDL
+
+### Recent Improvements (v2.0)
+
+**ANLT Translator Enhancements:**
+- Enhanced `_generic_format()` for better swarm response handling
+- Improved CSDL→Human conversion with structured field extraction
+- Support for agent findings (`f`), recommendations (`r`), warnings (`w`)
+- Metadata-aware formatting (agent count, routing info)
+- Fallback reconstruction from keywords for edge cases
+
+**Agent System Context:**
+- Agents now receive explicit CSDL structure requirements
+- Enhanced prompts for substantive analysis (not just status messages)
+- Agent-specific expertise injection for domain-relevant responses
+
+**Oracle Synthesis:**
+- Improved `_oracle_synthesize_csdl()` for multi-agent response merging
+- Deduplication of findings across agents
+- Coherent output structure with aggregated insights
+
+**Hybrid Architecture:**
+- Nemotron Nano for high-quality reasoning (port 5001)
+- CSDL-14B for protocol compliance encoding (port 5000)
+- Safety Guard for content moderation at edges (port 5002)
+- Graceful fallback to CSDL-only mode when Nemotron unavailable
 
 ### Archon - RAG System
 - **Supabase** pgvector for embeddings
